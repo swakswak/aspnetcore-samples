@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using OAuth2.Client;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -10,15 +9,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// OAuth2ClientConfiguration kakaoOauth2Configuration = builder.Configuration.GetSection("OAuth2:Provider:Kakao");
-var environment = builder.Environment.EnvironmentName;
-var kakaoOAuth2Config = builder.Configuration.GetSection("OAuth2:Provider:Kakao").Get<OAuth2ClientConfiguration>();
-// builder.Services.Configure<OAuth2ClientConfiguration>(o =>
-//     {
-//         o.ClientId = builder.Configuration[""]
-//     })
-//     
-//     .AddJsonFile($"appsettings.{environment}.json")
+// var kakaoOAuth2Config = builder.Configuration.GetValue<OAuth2ClientConfiguration>("OAuth2:Provider:Kakao");
+var kakaoOAuth2Config = new OAuth2ClientConfiguration();
+builder.Configuration.GetSection("OAuth2:Provider:Kakao").Bind(kakaoOAuth2Config);
+
+Console.WriteLine(kakaoOAuth2Config);
 builder.Services.AddAuthentication()
     .AddOAuth("Kakao", "Kakao", o =>
         {
@@ -38,7 +33,7 @@ builder.Services.AddAuthentication()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment is { EnvironmentName: "Local" })
 {
     app.UseSwagger();
     app.UseSwaggerUI();
