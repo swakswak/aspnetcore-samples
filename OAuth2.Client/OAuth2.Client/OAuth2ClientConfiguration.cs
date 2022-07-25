@@ -11,5 +11,5 @@ public class OAuth2ClientConfiguration
     public string UserInfoUri { get; set; }
     public string UserInfoAuthenticationMethod { get; set; }
     public string UserNameAttribute { get; set; }
-    public IList<string> Scope { get; set; }
+    public List<string> Scope { get; set; }
 }

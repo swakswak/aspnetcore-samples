@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>Toy.OAuth2.Client</RootNamespace>
+        <RootNamespace>OAuth2.Client</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
