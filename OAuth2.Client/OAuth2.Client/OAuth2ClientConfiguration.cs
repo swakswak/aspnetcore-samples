@@ -1,7 +1,12 @@
+using Microsoft.AspNetCore.Authentication;
+
 namespace OAuth2.Client;
 
 public class OAuth2ClientConfiguration
 {
+    public string AuthenticationScheme { get; set; }
+
+    public string DisplayName { get; set; }
     public string ClientId { get; set; }
     public string ClientName { get; set; }
     public string ClientSecret { get; set; }

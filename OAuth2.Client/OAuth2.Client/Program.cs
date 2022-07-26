@@ -1,10 +1,13 @@
+using System.Diagnostics.Eventing.Reader;
+using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using OAuth2.Client;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+    options.HttpsPort = 8081;
+});
 
 var kakaoOAuth2Config = new OAuth2ClientConfiguration();
 builder.Configuration.GetSection("OAuth2:Provider:Kakao").Bind(kakaoOAuth2Config);
@@ -21,15 +29,18 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "kakao";
+        
+        // options.DefaultSignInScheme = kakaoOAuth2Config.AuthenticationScheme;
+        // options.DefaultAuthenticateScheme = kakaoOAuth2Config.AuthenticationScheme;
+        
+        options.DefaultChallengeScheme = kakaoOAuth2Config.AuthenticationScheme;
     })
     .AddCookie()
-    .AddOAuth("kakao", "kakao", options =>
+    .AddOAuth(kakaoOAuth2Config.AuthenticationScheme, kakaoOAuth2Config.DisplayName, options =>
         {
             options.ClientId = kakaoOAuth2Config.ClientId;
             options.ClientSecret = kakaoOAuth2Config.ClientSecret;
             options.CallbackPath = new PathString(kakaoOAuth2Config.RedirectUri);
-            // options.CallbackPath = new PathString("/signin-kakao");
             options.SaveTokens = true;
             options.AuthorizationEndpoint = kakaoOAuth2Config.AuthorizationUri;
             options.TokenEndpoint = kakaoOAuth2Config.TokenUri;
@@ -37,50 +48,12 @@ builder.Services.AddAuthentication(options =>
             options.ClaimsIssuer = kakaoOAuth2Config.ClientName;
             options.SaveTokens = true;
             
-            // kakaoOAuth2Config.Scope.ForEach(x => options.Scope.Add(x));
-            
             options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
             options.ClaimActions.MapJsonKey(ClaimTypes.Name, "profile_nickname");
             options.ClaimActions.MapJsonKey("account_email", "account_email");
-            options.ClaimActions.MapJsonKey("birthday", "birthday");
-
-            // options.SignInScheme = ;
-
-            // options.Events = new OAuthEvents
-            // {
-            //     OnCreatingTicket = context =>
-            //     {
-            //         var accessToken = context.AccessToken;
-            //         var base64Payload = accessToken.Split('.')[1];
-            //         var bytes = Convert.FromBase64String(base64Payload);
-            //         var jsonPayload = Encoding.UTF8.GetString(bytes);
-            //         var claims = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonPayload);
-            //
-            //         // claims.Keys.ToList().ForEach(s => { context.Identity.AddClaim(new Claim(s, claims[s])); });
-            //
-            //         return Task.CompletedTask;
-            //
-            //         // var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-            //         // request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            //         // request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-            //         //
-            //         // var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-            //         // response.EnsureSuccessStatusCode();
-            //         //
-            //         // JObject user = JObject.Parse(await response.Content.ReadAsStringAsync());
-            //         // context.RunClaimActions(user);
-            //     }
-            // };
-            options.Events = new OAuthEvents()
-            {
-                OnTicketReceived = context =>
-                {
-                    Console.WriteLine(context);
-                    return Task.CompletedTask;
-                }
-            };
         }
     );
+
 
 var app = builder.Build();
 
@@ -95,13 +68,18 @@ app.Use((context, next) =>
     return next();
 });
 
-app.UseHttpsRedirection();
+app.UseCookiePolicy(new()
+{
+    MinimumSameSitePolicy = SameSiteMode.Strict,
+    HttpOnly = HttpOnlyPolicy.None,
+    Secure = CookieSecurePolicy.None
+});
+
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.UseCookiePolicy();
 
 app.MapControllers();
 
