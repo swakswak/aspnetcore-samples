@@ -1,14 +1,10 @@
-using System.Diagnostics.Eventing.Reader;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.CookiePolicy;
-using Microsoft.Extensions.Options;
 using OAuth2.Client;
+using OAuth2.Client.Cookie;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -27,15 +23,16 @@ builder.Configuration.GetSection("OAuth2:Provider:Kakao").Bind(kakaoOAuth2Config
 
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = "PolicyScheme";
         options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        
-        // options.DefaultSignInScheme = kakaoOAuth2Config.AuthenticationScheme;
-        // options.DefaultAuthenticateScheme = kakaoOAuth2Config.AuthenticationScheme;
-        
         options.DefaultChallengeScheme = kakaoOAuth2Config.AuthenticationScheme;
     })
-    .AddCookie()
+    .AddScheme<CustomAuthenticationSchemeOptions, CustomTokenAuthenticationHandler>(
+        CustomAuthenticationSchemeOptions.AuthenticationScheme, options => { })
+    .AddCookie(options =>
+    {
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    })
     .AddOAuth(kakaoOAuth2Config.AuthenticationScheme, kakaoOAuth2Config.DisplayName, options =>
         {
             options.ClientId = kakaoOAuth2Config.ClientId;
@@ -47,35 +44,35 @@ builder.Services.AddAuthentication(options =>
             options.UserInformationEndpoint = kakaoOAuth2Config.UserInfoUri;
             options.ClaimsIssuer = kakaoOAuth2Config.ClientName;
             options.SaveTokens = true;
-            
+
             options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
             options.ClaimActions.MapJsonKey(ClaimTypes.Name, "profile_nickname");
             options.ClaimActions.MapJsonKey("account_email", "account_email");
+
+            options.CorrelationCookie.SameSite = SameSiteMode.None;
+            options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
         }
-    );
+    )
+    // .AddPolicyScheme("PolicyScheme", "PolicyScheme", options =>
+    // {
+    //     options.ForwardDefaultSelector = context =>
+    //     {
+    //            
+    //     }
+    // })
+    ;
 
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment is { EnvironmentName: "Local" }) {
-    app.UseDeveloperExceptionPage();
-}
+if (app.Environment.IsDevelopment() || app.Environment is { EnvironmentName: "Local" }) app.UseDeveloperExceptionPage();
 
 app.Use((context, next) =>
 {
     context.Request.Host = new HostString("localhost:8080");
     return next();
 });
-
-app.UseCookiePolicy(new()
-{
-    MinimumSameSitePolicy = SameSiteMode.Strict,
-    HttpOnly = HttpOnlyPolicy.None,
-    Secure = CookieSecurePolicy.None
-});
-
-// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
