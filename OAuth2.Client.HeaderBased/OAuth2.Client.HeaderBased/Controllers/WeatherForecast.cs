@@ -1,4 +1,4 @@
-namespace OAuth2.Client.HeaderBased;
+namespace OAuth2.Client.HeaderBased.Controllers;
 
 public class WeatherForecast
 {
