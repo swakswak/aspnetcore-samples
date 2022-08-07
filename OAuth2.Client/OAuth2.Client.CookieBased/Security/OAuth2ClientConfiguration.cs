@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using OAuth2.Client.Security;
 
 namespace OAuth2.Client;
 
@@ -16,5 +17,5 @@ public class OAuth2ClientConfiguration
     public string UserInfoUri { get; set; }
     public string UserInfoAuthenticationMethod { get; set; }
     public string UserNameAttribute { get; set; }
-    public List<string> Scope { get; set; }
+    public Scope Scope { get; set; }
 }

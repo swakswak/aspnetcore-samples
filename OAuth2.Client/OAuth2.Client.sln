@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuth2.Client", "OAuth2.Client\OAuth2.Client.csproj", "{D9245EC6-62A4-43E2-82A1-8605D6167DB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuth2.Client.CookieBased", "OAuth2.Client.CookieBased\OAuth2.Client.CookieBased.csproj", "{D9245EC6-62A4-43E2-82A1-8605D6167DB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
