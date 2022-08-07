@@ -1,4 +1,4 @@
-namespace OAuth2.Client;
+namespace OAuth2.Client.Controllers;
 
 public class WeatherForecast
 {
