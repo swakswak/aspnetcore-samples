@@ -1,1 +1,1 @@
-# OAuth2 Client (Cookie Based)
+# OAuth2 Client (Header Based)
