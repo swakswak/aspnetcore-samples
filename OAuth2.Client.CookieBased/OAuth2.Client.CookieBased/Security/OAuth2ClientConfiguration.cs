@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
-using OAuth2.Client.Security;
-
-namespace OAuth2.Client;
+namespace OAuth2.Client.Security;
 
 public class OAuth2ClientConfiguration
 {
